@@ -14,7 +14,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.habit_tracker_yuanyang_chen.ui.theme.HabitTrackerYuanyangChenTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.fillMaxWidth
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.style.TextDecoration
 // 1. Define a data class to store habit name and completion status
 data class Habit(
     val name: String,
@@ -47,7 +54,9 @@ fun HabitTrackerApp(modifier: Modifier = Modifier) {
             .padding(16.dp)
     ) {
         HabitHeader()
-        // Next: HabitInputSection() will go here
+        HabitInputSection(onHabitAdded = { newHabitName ->
+            habitList.add(Habit(name = newHabitName))
+        })
     }
 }
 
@@ -58,4 +67,59 @@ fun HabitHeader() {
         style = MaterialTheme.typography.headlineMedium,
         modifier = Modifier.padding(bottom = 16.dp)
     )
+}
+
+@Composable
+fun HabitInputSection(onHabitAdded: (String) -> Unit) {
+    var textState by remember { mutableStateOf("") }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = textState,
+            onValueChange = { textState = it },
+            label = { Text("Enter a new habit") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Button(
+            onClick = {
+                if (textState.isNotBlank()) {
+                    onHabitAdded(textState)
+                    textState = ""
+                }
+            },
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Text("Add Habit")
+        }
+    }
+}
+
+
+@Composable
+fun HabitItem(habit: Habit) {
+    // Row makes text and button sit side-by-side
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // Display habit name with conditional strike-through
+        Text(
+            text = habit.name,
+            style = if (habit.isCompleted.value) {
+                MaterialTheme.typography.bodyLarge.copy(
+                    textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                )
+            } else {
+                MaterialTheme.typography.bodyLarge
+            }
+        )
+
+        // Button to toggle the completion state
+        Button(onClick = {
+            habit.isCompleted.value = !habit.isCompleted.value
+        }) {
+            Text("Completed")
+        }
+    }
 }
