@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 // 1. Define a data class to store habit name and completion status
 data class Habit(
     val name: String,
@@ -43,22 +45,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // 2. Composable functions moved outside the class (Separation of composables)
-@Composable
-fun HabitTrackerApp(modifier: Modifier = Modifier) {
-    // habitList now stores Habit objects to track the "Completed" state
-    val habitList = remember { mutableStateListOf<Habit>() }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        HabitHeader()
-        HabitInputSection(onHabitAdded = { newHabitName ->
-            habitList.add(Habit(name = newHabitName))
-        })
-    }
-}
 
 @Composable
 fun HabitHeader() {
@@ -121,5 +108,38 @@ fun HabitItem(habit: Habit) {
         }) {
             Text("Completed")
         }
+    }
+}
+@Composable
+fun HabitList(habits: List<Habit>) {
+    // LazyColumn efficiently renders only visible items
+    LazyColumn {
+        items(habits) { habit ->
+            // Calls the HabitItem we created earlier
+            HabitItem(habit = habit)
+        }
+    }
+}
+
+@Composable
+fun HabitTrackerApp(modifier: Modifier = Modifier) {
+    // This list tracks all added habits and updates the UI automatically
+    val habitList = remember { mutableStateListOf<Habit>() }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // 1. Header
+        HabitHeader()
+
+        // 2. Input area: Adds a new Habit object to the list
+        HabitInputSection(onHabitAdded = { newHabitName ->
+            habitList.add(Habit(name = newHabitName))
+        })
+
+        // 3. List area: Displays all habits in the list
+        HabitList(habits = habitList)
     }
 }
