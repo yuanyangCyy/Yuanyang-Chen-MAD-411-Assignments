@@ -1,6 +1,6 @@
 package com.example.habit_tracker_yuanyang_chen
-
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,18 +17,29 @@ import com.example.habit_tracker_yuanyang_chen.ui.theme.HabitTrackerYuanyangChen
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.fillMaxWidth
-
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-// 1. Define a data class to store habit name and completion status
+
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.Alignment
+
+// define a data class to store habit name and completion status
 data class Habit(
+    val id: Int,
     val name: String,
     val isCompleted: MutableState<Boolean> = mutableStateOf(false)
 )
+
+var nextId = 0
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +55,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// 2. Composable functions moved outside the class (Separation of composables)
+// composable functions moved outside the class
 
 
 @Composable
@@ -56,51 +67,85 @@ fun HabitHeader() {
     )
 }
 
+
+
+
 @Composable
 fun HabitInputSection(onHabitAdded: (String) -> Unit) {
+
+
+    // context needed for Toast
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // State for text input
     var textState by remember { mutableStateOf("") }
-    Column(modifier = Modifier.fillMaxWidth()) {
+
+    // Align items horizontally
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // text field with label
         OutlinedTextField(
             value = textState,
             onValueChange = { textState = it },
             label = { Text("Enter a new habit") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.weight(1f) // Takes up remaining space
         )
-        Button(
+
+        // Space between input and button
+        Spacer(modifier = Modifier.width(8.dp))
+
+        //  FAB  button
+        FloatingActionButton(
             onClick = {
                 if (textState.isNotBlank()) {
                     onHabitAdded(textState)
-                    textState = ""
+                   Toast.makeText(context,
+                        "Habit Added！",
+                        android.widget.Toast.LENGTH_LONG)
+                        .show()
+                    textState = "" // Clear input after adding
                 }
-            },
-            modifier = Modifier.padding(vertical = 8.dp)
+            }
         ) {
-            Text("Add Habit")
+            //  icon  the FAB
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add"
+            )
         }
     }
 }
 
 
+
 @Composable
-fun HabitItem(habit: Habit) {
+fun HabitItem(habit: Habit,  onDelete: ( ) -> Unit) {  //add onDele
     // Row makes text and button sit side-by-side
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
     ) {
-        // Display habit name with conditional strike-through
+
+
+
+
+        // Display habit name with conditional
+        // Display habit name with conditional color
         Text(
             text = habit.name,
-            style = if (habit.isCompleted.value) {
-                MaterialTheme.typography.bodyLarge.copy(
-                    textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
-                )
-            } else {
-                MaterialTheme.typography.bodyLarge
-            }
+            modifier = Modifier.weight(1f),
+           // if complete change color
+            color = if (habit.isCompleted.value) Color.Red else Color.Unspecified,
+            style = MaterialTheme.typography.bodyLarge
         )
+
+
+
+
 
         // Button to toggle the completion state
         Button(onClick = {
@@ -108,18 +153,39 @@ fun HabitItem(habit: Habit) {
         }) {
             Text("Completed")
         }
-    }
-}
-@Composable
-fun HabitList(habits: List<Habit>) {
-    // LazyColumn efficiently renders only visible items
-    LazyColumn {
-        items(habits) { habit ->
-            // Calls the HabitItem we created earlier
-            HabitItem(habit = habit)
+
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+
+        // add  Delete Button
+        Button(onClick = { onDelete() }) {
+            Text("Delete")
         }
     }
 }
+
+
+
+
+
+
+@Composable
+fun HabitList(habits: List<Habit>, onDeleteHabit: (Habit) -> Unit) {
+    // lazyColumn efficiently renders only visible items
+    LazyColumn {
+        items(habits) { habit ->
+            // call the HabitItem we created earlier
+            HabitItem(
+                habit = habit,
+                onDelete = { onDeleteHabit(habit) })
+        }
+    }
+}
+
+
+
+
 
 @Composable
 fun HabitTrackerApp(modifier: Modifier = Modifier) {
@@ -134,12 +200,13 @@ fun HabitTrackerApp(modifier: Modifier = Modifier) {
         // 1. Header
         HabitHeader()
 
-        // 2. Input area: Adds a new Habit object to the list
+        // adds a new Habit object to the list
         HabitInputSection(onHabitAdded = { newHabitName ->
-            habitList.add(Habit(name = newHabitName))
+            habitList.add(Habit(id = nextId++,name = newHabitName))
         })
 
-        // 3. List area: Displays all habits in the list
-        HabitList(habits = habitList)
+        // displays all habits in the list
+        HabitList(habits = habitList,
+            onDeleteHabit = { habit -> habitList.remove(habit) })  // add delect action
     }
 }
