@@ -1,36 +1,47 @@
 package com.example.habit_tracker_yuanyang_chen
+
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.example.habit_tracker_yuanyang_chen.ui.theme.HabitTrackerYuanyangChenTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Button
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import android.util.Log
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.layout.height
+import com.example.habit_tracker_yuanyang_chen.ui.theme.HabitTrackerYuanyangChenTheme
 
 // define a data class to store habit name and completion status
 data class Habit(
@@ -57,8 +68,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // 2. Override and log the remaining 5 lifecycle methods
 
+    // 2. Override and log the remaining 5 lifecycle methods
 
 override fun onStart() {
     super.onStart()
@@ -117,7 +128,9 @@ fun HabitInputSection(onHabitAdded: (String) -> Unit) {
 
     // Align items horizontally
     Row(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -159,32 +172,24 @@ fun HabitInputSection(onHabitAdded: (String) -> Unit) {
 
 
 @Composable
-fun HabitItem(habit: Habit,  onDelete: ( ) -> Unit) {  //add onDele
+fun HabitItem(habit: Habit, onDelete: () -> Unit, onViewDetails: () -> Unit) {
     // Row makes text and button sit side-by-side
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
-
-
-
-        // Display habit name with conditional
         // Display habit name with conditional color
+        // if complete change color
         Text(
             text = habit.name,
             modifier = Modifier.weight(1f),
-           // if complete change color
             color = if (habit.isCompleted.value) Color.Red else Color.Unspecified,
             style = MaterialTheme.typography.bodyLarge
         )
-
-
-
-
 
         // Button to toggle the completion state
         Button(onClick = {
@@ -193,11 +198,16 @@ fun HabitItem(habit: Habit,  onDelete: ( ) -> Unit) {  //add onDele
             Text("Completed")
         }
 
+        Spacer(modifier = Modifier.width(4.dp))
+
+        // View Details Button
+        Button(onClick = { onViewDetails() }) {
+            Text("Details")
+        }
 
         Spacer(modifier = Modifier.width(4.dp))
 
-
-        // add  Delete Button
+        // add Delete Button
         Button(onClick = { onDelete() }) {
             Text("Delete")
         }
@@ -208,44 +218,100 @@ fun HabitItem(habit: Habit,  onDelete: ( ) -> Unit) {  //add onDele
 
 
 
-
 @Composable
-fun HabitList(habits: List<Habit>, onDeleteHabit: (Habit) -> Unit) {
+fun HabitList(
+    habits: List<Habit>,
+    onDeleteHabit: (Habit) -> Unit,
+    onViewDetails: (Habit) -> Unit // Added onViewDetails parameter
+) {
     // lazyColumn efficiently renders only visible items
     LazyColumn {
         items(habits) { habit ->
             // call the HabitItem we created earlier
             HabitItem(
                 habit = habit,
-                onDelete = { onDeleteHabit(habit) })
+                onDelete = { onDeleteHabit(habit) },
+                onViewDetails = { onViewDetails(habit) } // Pass the habit to the detail button
+            )
         }
     }
 }
 
 
 
+@Composable
+fun HabitDetailScreen(habitName: String, isCompleted: Boolean, navController: NavController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Habit Name: $habitName", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = "Status: ${if (isCompleted) "Completed" else "Not Completed"}")
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(onClick = { navController.popBackStack() }) {
+            Text("Back")
+        }
+    }
+}
 
 
 @Composable
-fun HabitTrackerApp(modifier: Modifier = Modifier) {
-    // This list tracks all added habits and updates the UI automatically
-    val habitList = remember { mutableStateListOf<Habit>() }
-
+fun MainScreen(
+    habitList: MutableList<Habit>,
+    navController: NavController, // Added navController parameter
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // 1. Header
         HabitHeader()
 
-        // adds a new Habit object to the list
         HabitInputSection(onHabitAdded = { newHabitName ->
-            habitList.add(Habit(id = nextId++,name = newHabitName))
+            habitList.add(Habit(id = nextId++, name = newHabitName))
         })
 
-        // displays all habits in the list
-        HabitList(habits = habitList,
-            onDeleteHabit = { habit -> habitList.remove(habit) })  // add delect action
+        HabitList(
+            habits = habitList,
+            onDeleteHabit = { habit -> habitList.remove(habit) },
+            onViewDetails = { habit ->
+                // Navigate to detail route with habit name and completion status
+                navController.navigate("detail/${habit.name}/${habit.isCompleted.value}")
+            }
+        )
+    }
+}
+
+@Composable
+fun HabitTrackerApp(modifier: Modifier = Modifier) {
+
+    val habitList = remember { mutableStateListOf<Habit>() }
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "main") {
+
+
+        composable("main") {
+            MainScreen(habitList = habitList, navController = navController, modifier = modifier)
+        }
+
+
+        composable("detail/{habitName}/{status}") { backStackEntry ->
+
+            val habitName = backStackEntry.arguments?.getString("habitName") ?: "Unknown"
+            val statusString = backStackEntry.arguments?.getString("status") ?: "false"
+
+            HabitDetailScreen(
+                habitName = habitName,
+                isCompleted = statusString.toBoolean(),
+                navController = navController
+            )
+        }
     }
 }
