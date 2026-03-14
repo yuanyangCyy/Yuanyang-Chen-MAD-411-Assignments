@@ -25,6 +25,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -124,7 +127,7 @@ fun HabitInputSection(onHabitAdded: (String) -> Unit) {
 
 
     // State for text input
-    var textState by remember { mutableStateOf("") }
+    var textState by rememberSaveable { mutableStateOf("") }
 
     // Align items horizontally
     Row(
@@ -263,15 +266,27 @@ fun HabitDetailScreen(habitName: String, isCompleted: Boolean, navController: Na
 @Composable
 fun MainScreen(
     habitList: MutableList<Habit>,
-    navController: NavController, // Added navController parameter
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         HabitHeader()
+
+        Button(
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com"))
+                context.startActivity(intent)
+            },
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Text("Open Youtube")
+        }
 
         HabitInputSection(onHabitAdded = { newHabitName ->
             habitList.add(Habit(id = nextId++, name = newHabitName))
