@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-
+import android.util.Log
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 
@@ -44,6 +44,9 @@ var nextId = 0
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 1. Add Log to onCreate
+        Log.d("LifecycleLog", "onCreate called")
+
         enableEdgeToEdge()
         setContent {
             HabitTrackerYuanyangChenTheme {
@@ -53,11 +56,42 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // 2. Override and log the remaining 5 lifecycle methods
+
+
+override fun onStart() {
+    super.onStart()
+    Log.d("LifecycleLog", "onStart called")
 }
 
+override fun onResume() {
+    super.onResume()
+    Log.d("LifecycleLog", "onResume called")
+}
+
+override fun onPause() {
+    super.onPause()
+    Log.d("LifecycleLog", "onPause called")
+}
+
+override fun onStop() {
+    super.onStop()
+    Log.d("LifecycleLog", "onStop called")
+}
+
+override fun onDestroy() {
+    super.onDestroy()
+    Log.d("LifecycleLog", "onDestroy called")
+}
+}
+
+
+
+
+
+
 // composable functions moved outside the class
-
-
 @Composable
 fun HabitHeader() {
     Text(
@@ -76,6 +110,8 @@ fun HabitInputSection(onHabitAdded: (String) -> Unit) {
 
     // context needed for Toast
     val context = androidx.compose.ui.platform.LocalContext.current
+
+
     // State for text input
     var textState by remember { mutableStateOf("") }
 
@@ -84,6 +120,9 @@ fun HabitInputSection(onHabitAdded: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+
+
         // text field with label
         OutlinedTextField(
             value = textState,
@@ -102,7 +141,7 @@ fun HabitInputSection(onHabitAdded: (String) -> Unit) {
                     onHabitAdded(textState)
                    Toast.makeText(context,
                         "Habit Added！",
-                        android.widget.Toast.LENGTH_LONG)
+                        Toast.LENGTH_LONG)
                         .show()
                     textState = "" // Clear input after adding
                 }
